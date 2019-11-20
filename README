@@ -1,0 +1,25 @@
+Welcome
+
+Data used in this project was extracted on 11 October 2019 from CSIRO's database (Dynamics 365) the 'back end' supporting HSE's incident and hazard management reporting system ('Lookin2it').
+
+Extracts contain no personal details but include IssueID number and Business Unit Information for reference should particular items emerge as needing further investigation or investment. Data in individual files can be linked based on Issue ID (unique key). Issue ID is asigned by Dynamics.
+
+Intention of the (mini) project is to analyse hazard profiles for site and to understand how actions are being used (or not) to ensure risks posed by hazards are controlled
+
+Data available to CSIRO staff only and by request, all requests to HSECorporateTeam@csiro.au
+
+Data Descriptions:
+
+Action_from_issue.xlsx - export of all action records from the system where the 'trigger' for creating the action was from an incident or hazard investigation. Incident actions included in case there are linked actions
+
+All_hazards_all_new_categories.xlsx - export of all hazard records by IssueID with the complete list of Hazard Categoires, after a new categorisation was added in September 2018. 
+
+All_hazards_all_old_categories.xlsx - export of all hazard records by IssueID with the  list of Hazard Categoires prior to a new categorisation that was added in September 2018.
+
+All_Hazards_location_details.xlsx - export of all hazard records by IssueID with State/Site/Building/Floor information
+
+Hazard Catergory information
+
+The hazard category column headings identify the hazard category and subgroup, eg "HazardCategoriesWorkEnv.Fieldwork" or ""HazardCategoriesWorkEnv.Diving", presenting the data in a 'flat' format. There are also some inconsistencies in use of a full stop in the headings to be aware of, eg HazardCategoriesWorkEnvWorkstation. The string 'Hazard Categories to be removed in tidying the data so the category eg Work_Environment and subgroup eg Fieldwork or Diving or Workstation will remain and be separated into individual columns.
+
+Actions information
