@@ -1,0 +1,114 @@
+---
+title: Benefits to hazard reporting
+subtitle: 
+author:  Mandy Yialeloglou
+affiliation: Health Safety Environment # Or group/team
+photo: resources/img/pic.jpg
+
+short_title: Optional short title
+
+output: DSreport::project_summary
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  results = 'asis',
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE,
+  fig.align = 'center'
+)
+
+#Load libraries
+library(tidyverse)
+library(gapminder)
+library(kableExtra)
+```
+
+
+# Introduction
+I joined CSIRO in 1989 as a laboartory technician. I have been fortunate to have had many oportunities in both technical and support roles in my 30 years. I moved into the HSE team in 2005 and in my current role as "HSE Specialist - Systems and Analytics" in 2018.
+I manage our HSE reporting systems and forms, I have a really great working relationship with my IM&T colleagues. I am perfecty happy in the system administration space but I had very few current anaytical skills. I rely heavily on IM&T support for my 'data wrangling' and wanted to upskill.
+
+
+# My Project
+This **project**. was a 'proof of concept' to import, manipulate,interrogate and display data from HSE systems. 
+The long-term view is to be able to bring data from multiple sources to look for potential markers or hotspots to enable effective resourcing and prevenatative programs.
+
+With the incresing demand from the Board, ET and Busines Units for both regular and *ad hoc* HSE data anaylsis I am workig to create a process to accommodate these and be able to answer the 'what if', 'why'? questions. 
+In order to build this demo poster correctly, you will also need to have installed the `tidyverse`, 
+`gapminder`, and `kableExtra` packages.
+
+## Preliminary results
+
+This section will demonstrate the different visuals you might want use to show off your 
+project. Don't feel the need to go overboard, this is supposed to give a taste of the work you are
+doing rather than being a publication ready document.
+
+To get tables formatting correctly, use `knitr::kable` to convert the table to html format. If
+you also want to have alternate row highlighting, pass the result to `kable_styling('striped')` 
+from the `kableExtra` package.
+
+**Tables**
+```{r mytable, out.width='100%', echo = T}
+knitr::kable(head(gapminder, n = 5), format = "html", caption = "A table of data") %>% 
+  kable_styling("striped")
+```
+
+**Images from a file**
+
+![](resources/img/tidyverse.png){width=100px}
+
+**Plots from R**
+```{r standard-plot, out.width='60%', fig.align='center', fig.height= 4, fig.width=6, fig.cap="Yet another gapminder plot"}
+gapminder %>% 
+  filter(year == 1987) %>% 
+  ggplot(aes(x = gdpPercap, y = lifeExp, colour = continent, size = pop)) +
+  geom_point() +
+  scale_x_log10(labels = function(b) format(b, scientific = F)) +
+  scale_size(trans = "sqrt", guide = "none") +
+  scale_color_brewer(palette = "Set1") +
+  theme_linedraw() +
+  theme(legend.position = "bottom")
+```
+
+Your figure and table captions are automatically numbered and can be referenced in the text
+if needed: see eg. Table \@ref(tab:mytable) and Figure \@ref(fig:standard-plot)
+
+# My Digital Toolbox
+
+What digital tools have you been using in your project? Which ones have you learned since starting 
+Data School?
+
+You can use all the usual R markdown features in writing a project summary, including lists:
+
+* R - dplyr, ggplot, ...
+* Python
+* SQL
+
+## Favourite tool (optional)
+
+Is there a tool/package/function in particular that you've enjoyed using? Give it a special shout out here.
+
+![](https://raw.githubusercontent.com/tidyverse/ggplot2/master/man/figures/logo.png){.pull-right width=100px}
+
+No prizes for guessing mine:
+
+# My time went ...
+
+...on taking the principles we'd learned and then tring to write the code to my specific situation.
+
+I feel I grasped the concepts readily and applied them to the examples easily, but I am much better at taking what someone's done and modifying but less good a 'starting from scratch'
+
+# Next steps
+
+I'm really excited with the potential R offers and I'm keen to expand my skills and apply in a more holistic way. 
+R offers much greater potential for sharing code for data analysis across HSE as it is a package available to anyone.
+
+# My Data School Experience
+
+This poster is mostly about your synthesis project. However we would also like to hear about other
+parts of your Data School experience. What aspects of the program did you really enjoy? How have you
+been applying the skills you have learned in your daily work? Have you been able to transfer this 
+knowledge to your team members? Concrete examples demonstrating this would be useful here
+(meetings/talks/collaborations/new roles). Any descriptions of the personal impact the program has 
+had are welcome here as well!
