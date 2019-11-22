@@ -15,17 +15,20 @@ actions <- read_xlsx("data/Action_from_issue.xlsx", range = cell_cols("D:S"))
 
 categories_all <- full_join(categories_old, categories_new, by = c("Issue ID"))
 
-#rename columns to get rid of spaces as this will be an problem later on
+#rename columns to get rid of spaces as this will be an problem later on  -and for the record I must have found this script example somewhere and renamed it :-)
 
 colnames(categories_all)[which(names(categories_all) == "Issue ID")] <- "Issue_ID"
 colnames(categories_all)[which(names(categories_all) =="BU of Person Involved.x")] <- "Business_Unit"
 
 colnames(locations)[which(names(locations) == "Issue ID")] <- "Issue_ID"
 colnames(locations)[which(names(locations) =="BU of Person Involved")] <- "Business_Unit"
-#add code to replace spaces with underscores in reamining columns
+#add code to replace spaces and forward slash with underscores in reamining columns, note that forward slash needs to be identified as the character using the \\
+colnames(locations) <- str_replace_all(colnames(locations), c(" " = "_", "\\/" = "_"))
+
 
 colnames(actions)[which(names(actions) == "Issue ID")] <- "Issue_ID"
-#add code to replace spaces with underscores in reamining columns
+#add code to replace spaces and forward slash with underscores in reamining columns
+colnames(actions) <- str_replace_all(colnames(actions), c(" " = "_", "\\/" = "_"))
 
 # The categories_all data set is now very 'flat'. Ideally I'd like to have this so that the upper level hazard categories are a variable and the subcategories records within those. Challenge? Yes, I think so (ha!)
 #gather and spread to the rescue (I hope); here goes...
@@ -34,7 +37,7 @@ colnames(actions)[which(names(actions) == "Issue ID")] <- "Issue_ID"
 
 categories_long <- gather(categories_all, hazard_category,hazard_result,-Issue_ID,-Business_Unit)
 
-#becuase in the first instance I am only interested in where a hazard has been identified (ie a 'yes') I'll create a dataset for hazards present
+#because in the first instance I am only interested in where a hazard has been identified (ie a 'yes') I'll create a dataframe for hazards present
 
 categories_present <- filter(categories_long, hazard_result == "Yes")
 
@@ -52,6 +55,7 @@ categories_present_tidy <- categories_present %>%                               
 
 
 # now with the cleaned hazard category and sub group in a string, time to split the columns into category and subgroup, and write this to a file as we will need it later.
+# the code will split the string at the first white space (which is why we replaced Work Env with Work_Env in the previous step) and then everything after that is the next column
 Hazards_present_merged <- separate(categories_present_tidy, hazard_category, into = c("hazard_category", "hazard_subgroup"), sep = "\\s", extra = "merge")
 write_csv(Hazards_present_merged, path = "data/processed_data/Hazards_present_merged.csv")
 
@@ -62,10 +66,10 @@ write_csv(locations, path = "data/processed_data/locations.csv")
 write_csv(actions, path = "data/processed_data/actions.csv")
 
 # and so I have all the 'tidy' data I inteded I'm going to join merged hazards with locations and with actions
-hazard_locations <- inner_join(Hazards_present_merged, locations, by = c("Issue_ID")) # need to add code to ingnore the repeated BU information
+hazard_locations <- inner_join(Hazards_present_merged, locations, by = c("Issue_ID", "Business_Unit")) # ingnore the repeated BU information in the locations data
 write_csv(hazard_locations, path = "data/processed_data/hazard_locations.csv")
 
 hazard_actions <- inner_join(hazard_locations, actions, by = c("Issue_ID")) # incomplete code - but in the actins data the column name is Issue being addressed so need to fix this too
 
-#Phew! That took longer than I thought but I'm getting it now :-)  time to start some example visualisations. I'm going to do some testing in anew scriot and then copy the ones I want tokeep into this file
+#Phew! That took longer than I thought but I'm getting it now :-)  time to start some example visualisations. I'm going to do some testing in a new script and then copy the ones I want to keep into this file
 
