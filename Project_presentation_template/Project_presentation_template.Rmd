@@ -1,11 +1,11 @@
 ---
-title: Benefits to hazard reporting
+title: HSE Hazard Reporting
 subtitle: 
 author:  Mandy Yialeloglou
-affiliation: Health Safety Environment # Or group/team
+affiliation: Health, Safety and Environment # Or group/team
 photo: resources/img/pic.jpg
 
-short_title: Optional short title
+short_title: HSE Hazards
 
 output: DSreport::project_summary
 ---
@@ -31,71 +31,153 @@ I manage our HSE reporting systems and forms, I have a really great working rela
 
 
 # My Project
-This **project**. was a 'proof of concept' to import, manipulate,interrogate and display data from HSE systems. 
+This **project** was a 'proof of concept' to import, manipulate,interrogate and display data from HSE systems. 
 The long-term view is to be able to bring data from multiple sources to look for potential markers or hotspots to enable effective resourcing and prevenatative programs.
 
-With the incresing demand from the Board, ET and Busines Units for both regular and *ad hoc* HSE data anaylsis I am workig to create a process to accommodate these and be able to answer the 'what if', 'why'? questions. 
-In order to build this demo poster correctly, you will also need to have installed the `tidyverse`, 
-`gapminder`, and `kableExtra` packages.
+With the incresing demand from the Board, ET, Busines Units and Sites for both regular and *ad hoc* HSE data anaylsis I am working to create a process to accommodate these and be able to answer the *'what if?'*, *'why?'*? questions...... eventually.
+
+I started with a confined set of data and chose to look at hazard reported into Lookin2it. Reporting hazards can be viewed as preventative actions, but it's important to ensure the hazards are addressed and potential risk of injury, illness, operational or envirnmental impact are minimised, so identifying the proportion of hazards with follow up actions was also of interest.
 
 ## Preliminary results
 
-This section will demonstrate the different visuals you might want use to show off your 
-project. Don't feel the need to go overboard, this is supposed to give a taste of the work you are
-doing rather than being a publication ready document.
+Hazards were manipulated to indicate their upper level hazard category, the hazard subgroup within each category and joined to data that had location and business unit information. Some examples of visualising the data is shown below.
 
-To get tables formatting correctly, use `knitr::kable` to convert the table to html format. If
-you also want to have alternate row highlighting, pass the result to `kable_styling('striped')` 
-from the `kableExtra` package.
 
-**Tables**
-```{r mytable, out.width='100%', echo = T}
-knitr::kable(head(gapminder, n = 5), format = "html", caption = "A table of data") %>% 
-  kable_styling("striped")
+```{r import_and_tidy_code}
+library(tidyverse) # load the tidyverse
+library(readxl) # load the read Excel library as the data is in xlsx format
+library(stringr)
+
+# might need to also run remotes::install_github("sparce/DSreport") to get the RMarkdown template for our Data School project, Resart the R session to access the template and install the packages 'gapminder' and 'kableEXTRA' when prompted
+
+#read in the data but ignore the first 3 'hidden' cells
+locations <- read_xlsx("data/All_Hazards_location_details.xlsx", range = cell_cols("D:M"))
+categories_new <- read_xlsx("data/All_Hazards_all_new_categories.xlsx", range = cell_cols("D:DC"))
+categories_old <- read_xlsx("data/All_Hazards_all_old_categories.xlsx", range = cell_cols("D:BB"))
+actions <- read_xlsx("data/Action_from_issue.xlsx", range = cell_cols("D:S"))
+
+# first task is to assess differences/commonality in the Hazard category data between the old and new categories
+# Join the Hazard category data using full join
+
+categories_all <- full_join(categories_old, categories_new, by = c("Issue ID"))
+
+#rename columns to get rid of spaces as this will be an problem later on  -and for the record I must have found this script example somewhere and renamed it :-)
+
+colnames(categories_all)[which(names(categories_all) == "Issue ID")] <- "Issue_ID"
+colnames(categories_all)[which(names(categories_all) =="BU of Person Involved.x")] <- "Business_Unit"
+
+colnames(locations)[which(names(locations) == "Issue ID")] <- "Issue_ID"
+colnames(locations)[which(names(locations) =="BU of Person Involved")] <- "Business_Unit"
+#add code to replace spaces and forward slash with underscores in reamining columns, note that forward slash needs to be identified as the character using the \\
+colnames(locations) <- str_replace_all(colnames(locations), c(" " = "_", "\\/" = "_"))
+
+
+colnames(actions)[which(names(actions) == "Issue being addressed")] <- "Issue_ID" # this didn't appear to work so original column name used in the inner join below
+#add code to replace spaces and forward slash with underscores in reamining columns
+colnames(actions) <- str_replace_all(colnames(actions), c(" " = "_", "\\/" = "_"))
+
+# The categories_all data set is now very 'flat'. Ideally I'd like to have this so that the upper level hazard categories are a variable and the subcategories records within those. Challenge? Yes, I think so (ha!)
+#gather and spread to the rescue (I hope); here goes...
+#remember gather(dataset, where_to_store_column_names, where_to_store_values, what_to_gather, anything_to_ignore)
+# I want to end up with columns Issue ID, BU, hazard category, hazard result (yes or no)
+
+categories_long <- gather(categories_all, hazard_category,hazard_result,-Issue_ID,-Business_Unit)
+
+#because in the first instance I am only interested in where a hazard has been identified (ie a 'yes') I'll create a dataframe for hazards present
+
+categories_present <- filter(categories_long, hazard_result == "Yes")
+
+# hidden in the Hazard category is the category and subcategory details, gonna try splitting that out....
+#get rid of the Hazard Category string at the start of each category
+#get rid of added .x and .y text created at join - categories will be the same and have the same meaning 
+#remove the space in the category Work Env as we need spaces to separate the columns in the next step
+
+
+categories_present_tidy <- categories_present %>%                                    #create a new tidy data frame
+  mutate(hazard_category = str_remove(hazard_category, "Hazard Categories ")) %>%    #this is telling R to overwrite the hazard_categories column (ie create a column with the same name = overwrite)and look for and remove the string (ie text) Hazard Categories 
+  mutate(hazard_category = str_remove(hazard_category, "\\.x")) %>%                  #this is telling R to overwrite the hazard_categories column and look for and remove the literal text string .x (that was added at the join step)
+  mutate(hazard_category = str_remove(hazard_category, "\\.y")) %>%                  #this is telling R to overwrite the hazard_categories column and look for and remove the literal text string .x (that was added at the join step)
+  mutate(hazard_category = str_replace(hazard_category, "Work Env\\.?", "Work_Env")) %>%  #this is telling R to overwrite the hazard_categories column and look for anything that has Work Env with a literal full stop (the \\ denotes an actual full stop as opposed to any character) and the ? inicates any character either side of that, that will allow for both version or Work Env with and without the full stop to be replaced (from the  old hazard categories and new categories) 
+  mutate(hazard_category = str_replace(hazard_category, "Psycho", "Psych"))               # this keeps the naming consisitent between the old and new categories
+
+
+# now with the cleaned hazard category and sub group in a string, time to split the columns into category and subgroup, and write this to a file as we will need it later.
+# the code will split the string at the first white space (which is why we replaced Work Env with Work_Env in the previous step) and then everything after that is the next column
+Hazards_present_merged <- separate(categories_present_tidy, hazard_category, into = c("hazard_category", "hazard_subgroup"), sep = "\\s", extra = "merge")
+write_csv(Hazards_present_merged, path = "data/processed_data/Hazards_present_merged.csv")
+
+# and I probably should have done this earlier but as I intend to join the locations data to the merged hazard data so I'll write that to a csv file as well
+write_csv(locations, path = "data/processed_data/locations.csv")
+
+# and while I'm at it I may get around to the actions piece so let's create that file too
+write_csv(actions, path = "data/processed_data/actions.csv")
+
+# and so I have all the 'tidy' data I inteded I'm going to join merged hazards with locations and with actions
+hazard_locations <- inner_join(Hazards_present_merged, locations, by = c("Issue_ID", "Business_Unit")) # ingnore the repeated BU information in the locations data
+write_csv(hazard_locations, path = "data/processed_data/hazard_locations.csv")
+
+hazard_actions <- inner_join(hazard_locations, actions, by = c("Issue_ID" = "Issue_Being_Addressed")) # incomplete code - but in the actins data the column name is Issue being addressed so need to fix this too
+write_csv(hazard_actions, path = "data/processed_data/hazard_actions.csv")
+
+#Phew! That took longer than I thought but I'm getting it now :-)  time to start some example visualisations. I'm going to do some testing in a new script and then copy the ones I want to keep into this file
+
+
 ```
-
-**Images from a file**
-
-![](resources/img/tidyverse.png){width=100px}
 
 **Plots from R**
-```{r standard-plot, out.width='60%', fig.align='center', fig.height= 4, fig.width=6, fig.cap="Yet another gapminder plot"}
-gapminder %>% 
-  filter(year == 1987) %>% 
-  ggplot(aes(x = gdpPercap, y = lifeExp, colour = continent, size = pop)) +
-  geom_point() +
-  scale_x_log10(labels = function(b) format(b, scientific = F)) +
-  scale_size(trans = "sqrt", guide = "none") +
-  scale_color_brewer(palette = "Set1") +
-  theme_linedraw() +
-  theme(legend.position = "bottom")
+
+Example step, display of all hazards reported summarised by hazard category, and showing where the investiagating manager has indicated if follow-up actoins are required.
+
+``````{r standard-plot1, out.width='60%', fig.align='center', fig.height= 4, fig.width=6, fig.cap="All Hazards reported"}
+ggplot(hazard_locations,
+      aes(hazard_category, 
+      fill = Further_Actions)) + 
+  geom_bar() +
+  labs(title = "All Hazards reported, May 2017 - October 2019 ",
+       x = "Hazard Category",
+       y = "Count",
+       fill = "Follow up actions indicated") +
+  theme(axis.text.x = element_text(angle = 45))
 ```
 
-Your figure and table captions are automatically numbered and can be referenced in the text
-if needed: see eg. Table \@ref(tab:mytable) and Figure \@ref(fig:standard-plot)
+Risk profiles for sites potentially be informed byt eh hazards that staff are reporting. This example shows hazards filtered for the Clatyton site
+
+```{r standard-plot2, out.width='60%', fig.align='center', fig.height= 4, fig.width=6, fig.cap="Hazards filtered for Clayton site"}
+ggplot(hazard_locations %>% 
+      filter(Site == "Clayton"), 
+      aes(hazard_category, 
+      fill = Further_Actions)) + 
+  geom_bar() +
+  labs(title = "Hazards reported at Clayton",
+       x = "Hazard Category",
+       y = "Count",
+       fill = "Follow up actions indicated") +
+  theme(axis.text.x = element_text(angle = 45))
+```
+
+
+Work Environment is a large category so an example of looking at the hazard subgroups that make up this category can further inform here potentail risks lie. This time the results are also displayed by the BU of the person that reported the hazard.
+
+```{r standard-plot3, out.width='80%', fig.align='center', fig.height= 4, fig.width=9, fig.cap="Work Environment Hazards reported at Clayton site"}
+ggplot(hazard_locations %>% 
+         filter(Site == "Clayton", hazard_category == "Work_Env"), aes(hazard_category, fill = Business_Unit)) + 
+  geom_bar() +
+  facet_wrap(~hazard_subgroup) +
+  labs(title = "Work Environment Hazards reported at Clayton",
+       x = "Hazard Sub-group",
+       y = "Count",
+       fill = "Business Unit") 
+```
+
 
 # My Digital Toolbox
 
-What digital tools have you been using in your project? Which ones have you learned since starting 
-Data School?
+I used R and ggplot. I also had some fun with stringr in manipulating categories and sub-categories (and I didn't have time to drop in images sorry!)
 
-You can use all the usual R markdown features in writing a project summary, including lists:
-
-* R - dplyr, ggplot, ...
-* Python
-* SQL
-
-## Favourite tool (optional)
-
-Is there a tool/package/function in particular that you've enjoyed using? Give it a special shout out here.
-
-![](https://raw.githubusercontent.com/tidyverse/ggplot2/master/man/figures/logo.png){.pull-right width=100px}
-
-No prizes for guessing mine:
 
 # My time went ...
 
-...on taking the principles we'd learned and then tring to write the code to my specific situation.
+...on taking the principles we'd learned and then trying to write the code to my specific situation.
 
 I feel I grasped the concepts readily and applied them to the examples easily, but I am much better at taking what someone's done and modifying but less good a 'starting from scratch'
 
@@ -106,9 +188,8 @@ R offers much greater potential for sharing code for data analysis across HSE as
 
 # My Data School Experience
 
-This poster is mostly about your synthesis project. However we would also like to hear about other
-parts of your Data School experience. What aspects of the program did you really enjoy? How have you
-been applying the skills you have learned in your daily work? Have you been able to transfer this 
-knowledge to your team members? Concrete examples demonstrating this would be useful here
-(meetings/talks/collaborations/new roles). Any descriptions of the personal impact the program has 
-had are welcome here as well!
+Data School has definitely been a highlight of the year. It has been fantastic to be learning a new skill in a really supportive environment. I have really enjoyed the 'part-time' format. The trainers and the helpers have a shared passion that is evident and has been transferred!
+
+I can see so much potential in what R can do in the reporting an analytics space so I will be ensuring I block out development time to begin to improve and streamline some of our regular reporting
+
+

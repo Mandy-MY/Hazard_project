@@ -26,7 +26,7 @@ colnames(locations)[which(names(locations) =="BU of Person Involved")] <- "Busin
 colnames(locations) <- str_replace_all(colnames(locations), c(" " = "_", "\\/" = "_"))
 
 
-colnames(actions)[which(names(actions) == "Issue ID")] <- "Issue_ID"
+colnames(actions)[which(names(actions) == "Issue being addressed")] <- "Issue_ID" # this didn't appear to work so original column name used in the inner join below
 #add code to replace spaces and forward slash with underscores in reamining columns
 colnames(actions) <- str_replace_all(colnames(actions), c(" " = "_", "\\/" = "_"))
 
@@ -51,7 +51,8 @@ categories_present_tidy <- categories_present %>%                               
   mutate(hazard_category = str_remove(hazard_category, "Hazard Categories ")) %>%    #this is telling R to overwrite the hazard_categories column (ie create a column with the same name = overwrite)and look for and remove the string (ie text) Hazard Categories 
   mutate(hazard_category = str_remove(hazard_category, "\\.x")) %>%                  #this is telling R to overwrite the hazard_categories column and look for and remove the literal text string .x (that was added at the join step)
   mutate(hazard_category = str_remove(hazard_category, "\\.y")) %>%                  #this is telling R to overwrite the hazard_categories column and look for and remove the literal text string .x (that was added at the join step)
-  mutate(hazard_category = str_replace(hazard_category, "Work Env\\.?", "Work_Env")) #this is telling R to overwrite the hazard_categories column and look for anything that has Work Env with a literal full stop (the \\ denotes an actual full stop as opposed to any character) and the ? inicates any character either side of that, that will allow for both version or Work Env with and without the full stop to be replaced (from the  old hazard categories and new categories) 
+  mutate(hazard_category = str_replace(hazard_category, "Work Env\\.?", "Work_Env")) %>%  #this is telling R to overwrite the hazard_categories column and look for anything that has Work Env with a literal full stop (the \\ denotes an actual full stop as opposed to any character) and the ? inicates any character either side of that, that will allow for both version or Work Env with and without the full stop to be replaced (from the  old hazard categories and new categories) 
+  mutate(hazard_category = str_replace(hazard_category, "Psycho", "Psych"))               # this keeps the naming consisitent between the old and new categories
 
 
 # now with the cleaned hazard category and sub group in a string, time to split the columns into category and subgroup, and write this to a file as we will need it later.
@@ -69,7 +70,8 @@ write_csv(actions, path = "data/processed_data/actions.csv")
 hazard_locations <- inner_join(Hazards_present_merged, locations, by = c("Issue_ID", "Business_Unit")) # ingnore the repeated BU information in the locations data
 write_csv(hazard_locations, path = "data/processed_data/hazard_locations.csv")
 
-hazard_actions <- inner_join(hazard_locations, actions, by = c("Issue_ID")) # incomplete code - but in the actins data the column name is Issue being addressed so need to fix this too
+hazard_actions <- inner_join(hazard_locations, actions, by = c("Issue_ID" = "Issue_Being_Addressed")) # incomplete code - but in the actins data the column name is Issue being addressed so need to fix this too
+write_csv(hazard_actions, path = "data/processed_data/hazard_actions.csv")
 
 #Phew! That took longer than I thought but I'm getting it now :-)  time to start some example visualisations. I'm going to do some testing in a new script and then copy the ones I want to keep into this file
 
