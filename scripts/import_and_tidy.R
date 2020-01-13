@@ -70,8 +70,15 @@ write_csv(actions, path = "data/processed_data/actions.csv")
 hazard_locations <- inner_join(Hazards_present_merged, locations, by = c("Issue_ID", "Business_Unit")) # ingnore the repeated BU information in the locations data
 write_csv(hazard_locations, path = "data/processed_data/hazard_locations.csv")
 
-hazard_actions <- inner_join(hazard_locations, actions, by = c("Issue_ID" = "Issue_Being_Addressed")) # incomplete code - but in the actins data the column name is Issue being addressed so need to fix this too
-write_csv(hazard_actions, path = "data/processed_data/hazard_actions.csv")
+hazard_actions <- inner_join(hazard_locations, actions, by = c("Issue_ID" = "Issue_Being_Addressed")) # in the actions data the column name is Issue being addressed so need tell it to look this to match Issue ID
+write_csv(hazard_actions, path = "data/processed_data/hazard_actions.csv") # being inner join this will only have data where the action exists, it does not account for missing data, where Follow up Action is Yes but there are no actions identified
+
+hazard_actions_noactions <- left_join(hazard_locations, actions, by = c("Issue_ID" = "Issue_Being_Addressed")) # this should highlight where there are no actions for hazards
+write_csv(hazard_actions_noactions, path = "data/processed_data/hazard_actions_noactions.csv") 
+
+hazard_further_actions <- filter(hazard_actions_noactions, Further_Actions == "Yes") # this now identifies the list of hazards where further actiosn was showing as yes to quickly highlight the gaps
+write_csv(hazard_further_actions, path = "data/processed_data/hazard_further_actions.csv") 
+
 
 #Phew! That took longer than I thought but I'm getting it now :-)  time to start some example visualisations. I'm going to do some testing in a new script and then copy the ones I want to keep into this file
 
