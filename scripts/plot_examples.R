@@ -18,7 +18,7 @@ ggplot(hazard_locations %>%
   labs(title = "Hazards reported at Clayton",
        x = "Hazard Category",
        y = "Count",
-       fill = "Follow up actions indicated") # was not intuitive that the fill is where I needed to cange the legend title but there you go, something new learned :-)
+       fill = "Follow up actions indicated") # was not intuitive that the fill is where I needed to change the legend title but there you go, something new learned :-)
 
 
 ggplot(hazard_locations %>% 
